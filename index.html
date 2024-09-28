@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nodejs chat Real-Time</title>
+  </head>
+  <body>
+    <ul id="message"></ul>
+    <!-- cho nay hien thi typing.... -->
+    <p id="typing"></p>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" />
+      <button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      var form = document.getElementById("form");
+      var input = document.getElementById("input");
+      var typingIndecator = document.getElementById("typing");
+      var typingTimeOut;
+
+      //function send message
+      form.addEventListener("submit", function (e) {
+        e.preventDefault(); //xu ly envent tuan tu
+        if (input.value) {
+          socket.emit("chat message", input.value);
+          input.value = "";
+          socket.emit("stop typing");
+        }
+      });
+
+      //input chat message
+      input.addEventListener("input", function (e) {
+        socket.emit("typing"); //send event typing
+        clearTimeout(typingTimeOut);
+        typingTimeOut = setTimeout(function () {
+          socket.emit("stop typing");
+        }, 1000); //stop typing after 1s
+      });
+
+      //eventListener from server
+      socket.on("chat message", function (msg) {
+        var item = document.createElement("li");
+        item.textContent = msg;
+        document.getElementById("message").appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      //EventListener typing from server
+      socket.on("Someone typing", function () {
+        typingIndecator.textContent = "Typing....";
+      });
+
+      socket.on("stop typing", function () {
+        typingIndecator.textContent = "";
+      });
+    </script>
+  </body>
+</html>
