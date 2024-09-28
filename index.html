@@ -3,16 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nodejs chat Real-Time</title>
+    <title>Nodejs chat Real-Time with Tic-Tac-Toe 9x9</title>
+    <style>
+      table {
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      td {
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        font-size: 24px;
+        border: 1px solid black;
+        cursor: pointer;
+      }
+      #gameBoard {
+        display: none; /* Ẩn bàn cờ cho đến khi người chơi nhập biệt danh */
+      }
+    </style>
   </head>
   <body>
     <ul id="message"></ul>
-    <!-- cho nay hien thi typing.... -->
     <p id="typing"></p>
     <form id="form" action="">
       <input id="input" autocomplete="off" />
       <button>Send</button>
     </form>
+
+    <!-- Nhập biệt danh -->
+    <div id="nicknameInput">
+      <h3>Nhập biệt danh của bạn để bắt đầu chơi</h3>
+      <input id="nickname" placeholder="Biệt danh của bạn" autocomplete="off" />
+      <button onclick="submitNickname()">Bắt đầu chơi</button>
+    </div>
+
+    <!-- Bàn cờ X/O 9x9 -->
+    <div id="gameBoard">
+      <h3>Tic-Tac-Toe 9x9</h3>
+      <table>
+        <!-- Tạo 9 hàng, mỗi hàng có 9 ô -->
+        <script>
+          for (let i = 0; i < 9; i++) {
+            document.write('<tr>');
+            for (let j = 0; j < 9; j++) {
+              document.write('<td id="' + (i * 9 + j) + '" onclick="makeMove(' + (i * 9 + j) + ')"></td>');
+            }
+            document.write('</tr>');
+          }
+        </script>
+      </table>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
       var socket = io();
@@ -20,10 +61,13 @@
       var input = document.getElementById("input");
       var typingIndecator = document.getElementById("typing");
       var typingTimeOut;
+      var currentPlayer = "X";
+      var gameBoard = Array(81).fill(""); // Bàn cờ 9x9 chứa 81 ô
+      var nickname; // Biến lưu biệt danh người chơi
 
-      //function send message
+      // Gửi tin nhắn
       form.addEventListener("submit", function (e) {
-        e.preventDefault(); //xu ly envent tuan tu
+        e.preventDefault();
         if (input.value) {
           socket.emit("chat message", input.value);
           input.value = "";
@@ -31,16 +75,16 @@
         }
       });
 
-      //input chat message
-      input.addEventListener("input", function (e) {
-        socket.emit("typing"); //send event typing
+      // Phát sự kiện typing
+      input.addEventListener("input", function () {
+        socket.emit("typing");
         clearTimeout(typingTimeOut);
         typingTimeOut = setTimeout(function () {
           socket.emit("stop typing");
-        }, 1000); //stop typing after 1s
+        }, 1000);
       });
 
-      //eventListener from server
+      // Nhận sự kiện từ server cho chat message
       socket.on("chat message", function (msg) {
         var item = document.createElement("li");
         item.textContent = msg;
@@ -48,13 +92,57 @@
         window.scrollTo(0, document.body.scrollHeight);
       });
 
-      //EventListener typing from server
-      socket.on("Someone typing", function () {
-        typingIndecator.textContent = "Typing....";
+      // Hiển thị trạng thái typing
+      socket.on("typing", function () {
+        typingIndecator.textContent = "Typing...";
       });
 
       socket.on("stop typing", function () {
         typingIndecator.textContent = "";
+      });
+
+      // Chức năng đánh X/O
+      function makeMove(position) {
+        if (gameBoard[position] === "") {
+          socket.emit("make move", { position: position, player: currentPlayer });
+        }
+      }
+
+      // Cập nhật bàn cờ từ server
+      socket.on("update board", function (data) {
+        gameBoard = data.board;
+        currentPlayer = data.currentPlayer;
+
+        for (var i = 0; i < gameBoard.length; i++) {
+          document.getElementById(i).textContent = gameBoard[i];
+        }
+      });
+
+      // Thông báo khi kết thúc game
+      socket.on("game over", function (data) {
+        alert("Người chiến thắng là: " + data.winner);
+        gameBoard = Array(81).fill(""); // Reset lại bàn cờ 9x9
+        for (var i = 0; i < 81; i++) {
+          document.getElementById(i).textContent = "";
+        }
+      });
+
+      // Nhập biệt danh
+      function submitNickname() {
+        nickname = document.getElementById("nickname").value;
+        if (nickname) {
+          socket.emit("set nickname", nickname); // Gửi biệt danh lên server
+          document.getElementById("nicknameInput").style.display = "none"; // Ẩn phần nhập biệt danh
+          document.getElementById("gameBoard").style.display = "block"; // Hiển thị bàn cờ
+        } else {
+          alert("Vui lòng nhập biệt danh của bạn!");
+        }
+      }
+
+      // Cập nhật biệt danh người chơi từ server
+      socket.on("start game", function (data) {
+        alert(data.message);
+        currentPlayer = data.currentPlayer; // Đặt người chơi bắt đầu
       });
     </script>
   </body>
