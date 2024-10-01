@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Node.js Real-Time Chat with Tic-Tac-Toe 9x9</title>
+    <title>Tic Tac Toe</title>
     <style>
       table {
         border-collapse: collapse;
@@ -42,10 +42,10 @@
       <h3>Tic-Tac-Toe</h3>
       <table>
         <script>
-          for (let i = 0; i < 9; i++) {
+          for (let i = 0; i < 11; i++) {
             document.write('<tr>');
-            for (let j = 0; j < 9; j++) {
-              document.write('<td id="' + (i * 9 + j) + '" onclick="makeMove(' + (i * 9 + j) + ')"></td>');
+            for (let j = 0; j < 11; j++) {
+              document.write('<td id="' + (i * 11 + j) + '" onclick="makeMove(' + (i * 11 + j) + ')"></td>');
             }
             document.write('</tr>');
           }
@@ -61,7 +61,7 @@
       var typingIndecator = document.getElementById("typing");
       var typingTimeOut;
       var currentPlayer = "X"; 
-      var gameBoard = Array(81).fill(""); 
+      var gameBoard = Array(100).fill(""); 
       var nickname; 
 
       // Gửi tin nhắn
@@ -120,8 +120,8 @@
       // Thông báo khi kết thúc game
       socket.on("game over", function (data) {
         alert("The winner is: " + data.winner); // Hiển thị thông báo người thắng
-        gameBoard = Array(81).fill(""); // Reset lại bàn cờ
-        for (var i = 0; i < 81; i++) {
+        gameBoard = Array(100).fill(""); // Reset lại bàn cờ
+        for (var i = 0; i < 100; i++) {
           document.getElementById(i).textContent = ""; // Xóa nội dung bàn cờ
         }
       });

@@ -6,13 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let gameBoard = Array(81).fill(""); // Bàn cờ 9x9, chứa 81 ô
+let gameBoard = Array(100).fill(""); // Bàn cờ 9x9, chứa 81 ô
 let currentPlayer = "X"; // Người chơi bắt đầu
 let players = {}; // Lưu thông tin biệt danh của người chơi
 
 // Hàm kiểm tra người chiến thắng theo luật 5 lần liên tiếp
 function checkWinner(board) {
-  const size = 9; // Kích thước bàn cờ 9x9
+  const size = 11; // Kích thước bàn cờ 9x9
   const winningLength = 5; // Cần 5 ký tự liên tiếp để chiến thắng
 
   // Kiểm tra theo hàng ngang, dọc và chéo
@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
   console.log("User connected"); // Khi người chơi kết nối
 
   // Khi có kết nối mới, reset lại dữ liệu trò chơi
-  gameBoard = Array(81).fill(""); // Reset bàn cờ
+  gameBoard = Array(100).fill(""); // Reset bàn cờ
   players = {}; // Reset danh sách người chơi
   currentPlayer = "X"; // Đặt lại người chơi bắt đầu là X
 
