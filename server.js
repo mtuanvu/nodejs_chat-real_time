@@ -69,7 +69,8 @@ io.on('connection', (socket) => {
 
   // Lắng nghe sự kiện chat message
   socket.on('chat message', (msg) => {
-    io.emit("chat message", msg);
+    const nickname = players[socket.id]; // Lấy biệt danh của người chơi
+    io.emit("chat message", `${nickname}: ${msg}`); // Gửi biệt danh kèm tin nhắn
   });
 
   // Lắng nghe sự kiện typing
