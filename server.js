@@ -6,36 +6,36 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let gameBoard = Array(81).fill(""); // Bàn cờ 9x9
-let currentPlayer = "X";
+let gameBoard = Array(81).fill(""); // Bàn cờ 9x9, chứa 81 ô
+let currentPlayer = "X"; // Người chơi bắt đầu
 let players = {}; // Lưu thông tin biệt danh của người chơi
 
 // Hàm kiểm tra người chiến thắng theo luật 5 lần liên tiếp
 function checkWinner(board) {
   const size = 9; // Kích thước bàn cờ 9x9
-  const winningLength = 5; // Cần 5 lần liên tiếp
+  const winningLength = 5; // Cần 5 ký tự liên tiếp để chiến thắng
 
   // Kiểm tra theo hàng ngang, dọc và chéo
   function checkDirection(dx, dy) {
     for (let x = 0; x < size; x++) {
       for (let y = 0; y < size; y++) {
         let symbol = board[x * size + y];
-        if (symbol === "") continue;
+        if (symbol === "") continue; // Nếu ô trống, bỏ qua
         
         let count = 0;
         for (let step = 0; step < winningLength; step++) {
           let nx = x + dx * step;
           let ny = y + dy * step;
           if (nx >= 0 && nx < size && ny >= 0 && ny < size && board[nx * size + ny] === symbol) {
-            count++;
+            count++; // Đếm số lượng ký tự liên tiếp
           } else {
             break;
           }
         }
-        if (count === winningLength) return symbol; // Trả về biểu tượng của người chiến thắng
+        if (count === winningLength) return symbol; // Trả về ký hiệu của người chiến thắng
       }
     }
-    return null;
+    return null; // Không tìm thấy người chiến thắng
   }
 
   // Kiểm tra các hướng: ngang (1, 0), dọc (0, 1), chéo chính (1, 1), chéo phụ (1, -1)
@@ -43,26 +43,26 @@ function checkWinner(board) {
 }
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  res.sendFile(__dirname + "/index.html"); // Gửi file HTML cho client
 });
 
 io.on('connection', (socket) => {
-  console.log("User connected");
+  console.log("User connected"); // Khi người chơi kết nối
 
   // Khi có kết nối mới, reset lại dữ liệu trò chơi
-  gameBoard = Array(81).fill(""); // Reset lại bàn cờ
-  players = {}; // Reset lại danh sách người chơi
-  currentPlayer = "X"; // Đặt lại người chơi bắt đầu
+  gameBoard = Array(81).fill(""); // Reset bàn cờ
+  players = {}; // Reset danh sách người chơi
+  currentPlayer = "X"; // Đặt lại người chơi bắt đầu là X
 
   // Lắng nghe sự kiện đặt biệt danh
   socket.on("set nickname", (nickname) => {
-    players[socket.id] = nickname; // Lưu biệt danh với ID của socket
+    players[socket.id] = nickname; // Lưu biệt danh của người chơi với ID của socket
 
     if (Object.keys(players).length === 2) {
       // Khi đủ 2 người chơi, bắt đầu game
       io.emit("start game", { 
-        message: `Trò chơi bắt đầu! ${players[socket.id]} là người đánh trước.`, 
-        currentPlayer: "X" 
+        message: `Game started! ${players[socket.id]} goes first.`, // Thông báo người chơi đầu tiên
+        currentPlayer: "X" // Người chơi X đánh trước
       });
     }
   });
@@ -75,18 +75,18 @@ io.on('connection', (socket) => {
 
   // Lắng nghe sự kiện typing
   socket.on("typing", () => {
-    socket.broadcast.emit("typing");
+    socket.broadcast.emit("typing"); // Thông báo khi người chơi đang gõ
   });
 
   socket.on("stop typing", () => {
-    socket.broadcast.emit("stop typing");
+    socket.broadcast.emit("stop typing"); // Dừng hiển thị khi người chơi ngừng gõ
   });
 
   // Lắng nghe sự kiện đánh X/O
   socket.on("make move", (data) => {
     if (gameBoard[data.position] === "") {
-      gameBoard[data.position] = data.player;
-      currentPlayer = data.player === "X" ? "O" : "X";
+      gameBoard[data.position] = data.player; // Cập nhật bàn cờ
+      currentPlayer = data.player === "X" ? "O" : "X"; // Chuyển lượt cho người chơi tiếp theo
 
       // Cập nhật bàn cờ trước khi kiểm tra chiến thắng
       io.emit("update board", { board: gameBoard, currentPlayer });
@@ -103,6 +103,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Xóa người chơi khi ngắt kết nối
   socket.on("disconnect", () => {
     console.log("User disconnected");
     delete players[socket.id]; // Xóa người chơi khi họ ngắt kết nối
@@ -110,5 +111,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(3000, () => {
-  console.log("Server running on port 3000");
+  console.log("Server running on port 3000"); // Server chạy trên cổng 3000
 });
